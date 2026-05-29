@@ -27,8 +27,21 @@ st.markdown(
     }
     
     /* Text styling overrides */
-    h1, h2, h3, h4, p, label, .stMarkdown {
+    h1, h2, h3, h4, p, label, .stMarkdown, .stSelectbox label {
         color: #ffffff !important;
+    }
+    
+    /* Top Contact Bar Header styling */
+    .client-header-bar {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 25px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
     }
     
     /* Product Cards */
@@ -75,7 +88,7 @@ st.markdown(
         border-radius: 20px 20px 0 0;
     }
     
-    /* Fix file uploader and input text colors for dark background */
+    /* Fix form inputs text and background contrast elements */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
         background-color: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
@@ -86,7 +99,72 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ================== Session State Management ==================
+# ================== Localization Dictionary Matrix ==================
+translations = {
+    "English": {
+        "subtitle": "Advanced Chemical Product Management & Storefront Inventory Layer",
+        "top_contact": "🏢 Business Operations Line:",
+        "admin_title": "## 📥 Admin Upload Panel",
+        "admin_desc": "Use this panel on your **Computer** or **Phone Gallery** to add stock live.",
+        "p_name": "Chemical Product Name:",
+        "p_cat": "Chemical Category:",
+        "p_price": "Price (e.g., USD or HTG):",
+        "p_desc": "Product Specifications & Description:",
+        "p_img": "Capture Photo or Choose from Gallery",
+        "btn_publish": "Publish Product to Storefront",
+        "msg_success": "has been published successfully!",
+        "msg_error": "Product Name and Price fields are strictly required.",
+        "catalog_title": "## 🛍️ Active Chemical Catalog",
+        "catalog_empty": "The catalog is currently empty. Use the sidebar panel to upload your inventory items.",
+        "no_img": "ℹ️ No visual asset uploaded for this product layer.",
+        "lang_label": "Select System Language Layout:"
+    },
+    "French": {
+        "subtitle": "Gestion Avancée des Produits Chimiques & Inventaire de la Vitrine",
+        "top_contact": "🏢 Ligne des Opérations Commerciales :",
+        "admin_title": "## 📥 Panneau de Gestion Admin",
+        "admin_desc": "Utilisez ce panneau sur votre **Ordinateur** ou **Galerie Téléphone** pour ajouter du stock en direct.",
+        "p_name": "Nom du Produit Chimique :",
+        "p_cat": "Catégorie Chimique :",
+        "p_price": "Prix (ex: USD ou HTG) :",
+        "p_desc": "Spécifications du Produit & Description :",
+        "p_img": "Prendre une Photo ou Choisir depuis la Galerie",
+        "btn_publish": "Publier le Produit sur la Vitrine",
+        "msg_success": "a été publié avec succès !",
+        "msg_error": "Le nom du produit et le prix sont strictement requis.",
+        "catalog_title": "## 🛍️ Catalogue des Produits Chimiques Actifs",
+        "catalog_empty": "Le catalogue est actuellement vide. Utilisez le panneau latéral pour ajouter des articles.",
+        "no_img": "ℹ️ Aucun visuel importé pour ce produit.",
+        "lang_label": "Sélectionner la Langue du Système :"
+    },
+    "Haitian Creole": {
+        "subtitle": "Sistèm Avanse pou Jere Pwodwi Chimik ak Envantè Boutik la",
+        "top_contact": "🏢 Liy Operasyon Biznis la:",
+        "admin_title": "## 📥 Panèl Administratè pou Chaje Pwodwi",
+        "admin_desc": "Sèvi ak panèl sa a sou **Òdinatè** ou oswa nan **Galri Telefòn** ou pou mete pwodwi an dirèk.",
+        "p_name": "Non Pwodwi Chimik la:",
+        "p_cat": "Kategori Pwodwi a:",
+        "p_price": "Pri (pa egzanp: USD oswa HTG):",
+        "p_desc": "Espesifikasyon ak Deskripsyon Pwodwi a:",
+        "p_img": "Pran yon Foto oswa Chwazi nan Galri a",
+        "btn_publish": "Pibliye Pwodwi a nan Boutik la",
+        "msg_success": "pibliye avèk siksè!",
+        "msg_error": "Non Pwodwi a ak Pri a obligatwa nèt.",
+        "catalog_title": "## 🛍️ Katalòg Pwodwi Chimik ki Disponib",
+        "catalog_empty": "Katalòg la vid pou kounye a. Sèvi ak panèl bò a pou chaje pwodwi ou yo.",
+        "no_img": "ℹ️ Pa gen okenn foto ki chaje pou pwodwi sa a.",
+        "lang_label": "Chwazi Lang pou Sistèm lan:"
+    }
+}
+
+# ================== Sidebar Language Engine Trigger ==================
+st.sidebar.markdown("## 🌐 Language Localization Layer")
+selected_lang = st.sidebar.selectbox("", ["English", "French", "Haitian Creole"], index=0)
+txt = translations[selected_lang]
+
+st.sidebar.markdown("---")
+
+# ================== Session State Mock Database ==================
 if "products" not in st.session_state:
     st.session_state.products = [
         {
@@ -105,24 +183,39 @@ if "products" not in st.session_state:
         }
     ]
 
-# ================== Header Architecture ==================
+# ================== Top Contact Corporate Infrastructure Header ==================
+st.markdown(
+    f"""
+    <div class="client-header-bar">
+        <div style="font-weight: 700; font-size: 1.05rem; color: #00ebc7 !important;">
+            📩 Business Support: <a href="mailto:Jamesonbonard97@gmail.com" style="color: #00ebc7; text-decoration: none;">Jamesonbonard97@gmail.com</a>
+        </div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: #ffffff !important;">
+            {txt['top_contact']} <a href="tel:+50944108261" style="color: #ffffff; text-decoration: none;">+509 44 10 8261</a>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ================== Application Header Architecture ==================
 st.title("🧪 BONARDENTERPRISE SOFTWARE")
-st.markdown("### <span class='neon-text'>Advanced Chemical Product Management & Storefront Inventory Layer</span>", unsafe_allow_html=True)
+st.markdown(f"### <span class='neon-text'>{txt['subtitle']}</span>", unsafe_allow_html=True)
 st.markdown("---")
 
-# ================== Sidebar: Real-Time Mobile Upload Control ==================
-st.sidebar.markdown("## 📥 Admin Upload Panel")
-st.sidebar.markdown("Use this panel on your **Computer** or **Phone Gallery** to add stock live.")
+# ================== Sidebar Form Components ==================
+st.sidebar.markdown(txt['admin_title'])
+st.sidebar.markdown(txt['admin_desc'])
 
 with st.sidebar.form(key="upload_form", clear_on_submit=True):
-    new_name = st.text_input("Chemical Product Name:")
-    new_cat = st.selectbox("Chemical Category:", ["Solvents", "Raw Materials", "Acids & Bases", "Agricultural Chemicals", "Detergents / Surfactants", "Other"])
-    new_price = st.text_input("Price (e.g., USD or HTG):")
-    new_desc = st.text_area("Product Specifications & Description:")
+    new_name = st.text_input(txt['p_name'])
+    new_cat = st.selectbox(txt['p_cat'], ["Solvents", "Raw Materials", "Acids & Bases", "Agricultural Chemicals", "Detergents / Surfactants", "Other"])
+    new_price = st.text_input(txt['p_price'])
+    new_desc = st.text_area(txt['p_desc'])
     
-    new_img = st.file_uploader("Capture Photo or Choose from Gallery", type=["jpg", "jpeg", "png", "webp"])
+    new_img = st.file_uploader(txt['p_img'], type=["jpg", "jpeg", "png", "webp"])
     
-    submit_product = st.form_submit_button("Publish Product to Storefront")
+    submit_product = st.form_submit_button(txt['btn_publish'])
 
 if submit_product:
     if new_name and new_price:
@@ -135,15 +228,15 @@ if submit_product:
             "desc": new_desc,
             "image": img_bytes
         })
-        st.sidebar.success(f"⚡ {new_name} has been published successfully!")
+        st.sidebar.success(f"⚡ {new_name} {txt['msg_success']}")
     else:
-        st.sidebar.error("Product Name and Price fields are strictly required.")
+        st.sidebar.error(txt['msg_error'])
 
-# ================== Main Body: Grid Layout Marketplace ==================
-st.markdown("## 🛍️ Active Chemical Catalog")
+# ================== Main Window Marketplace Display Grid ==================
+st.markdown(txt['catalog_title'])
 
 if not st.session_state.products:
-    st.info("The catalog is currently empty. Use the sidebar panel to upload your inventory items.")
+    st.info(txt['catalog_empty'])
 else:
     cols = st.columns(3)
     for idx, prod in enumerate(st.session_state.products):
@@ -161,9 +254,9 @@ else:
             if prod['image'] is not None:
                 st.image(prod['image'], use_container_width=True)
             else:
-                st.caption("ℹ️ No visual asset uploaded for this product layer.")
+                st.caption(txt['no_img'])
 
-# ================== Professional Footer Layout ==================
+# ================== Developer Footer Core Layers ==================
 st.markdown(
     """
     <div class="footer-container">
