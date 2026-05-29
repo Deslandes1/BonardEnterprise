@@ -10,6 +10,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ================== Security Configuration ==================
+# Change this variable to update your client's administrative password
+ADMIN_PASSWORD = "BonardAdmin2026"
+
 # ================== Colorful, Modern Uniform Styling ==================
 st.markdown(
     """
@@ -105,7 +109,10 @@ translations = {
         "subtitle": "Advanced Chemical Product Management & Storefront Inventory Layer",
         "top_contact": "🏢 Business Operations Line:",
         "admin_title": "## 📥 Admin Upload Panel",
-        "admin_desc": "Use this panel on your **Computer** or **Phone Gallery** to add stock live.",
+        "admin_desc": "Enter security password to access product upload fields.",
+        "pass_label": "Enter Security Password:",
+        "pass_success": "Access granted. Upload layers unlocked.",
+        "pass_error": "Invalid administrative password.",
         "p_name": "Chemical Product Name:",
         "p_cat": "Chemical Category:",
         "p_price": "Price (e.g., USD or HTG):",
@@ -115,15 +122,17 @@ translations = {
         "msg_success": "has been published successfully!",
         "msg_error": "Product Name and Price fields are strictly required.",
         "catalog_title": "## 🛍️ Active Chemical Catalog",
-        "catalog_empty": "The catalog is currently empty. Use the sidebar panel to upload your inventory items.",
-        "no_img": "ℹ️ No visual asset uploaded for this product layer.",
-        "lang_label": "Select System Language Layout:"
+        "catalog_empty": "The catalog is currently empty. Use the admin panel to upload inventory items.",
+        "no_img": "ℹ️ No visual asset uploaded for this product layer."
     },
     "French": {
         "subtitle": "Gestion Avancée des Produits Chimiques & Inventaire de la Vitrine",
         "top_contact": "🏢 Ligne des Opérations Commerciales :",
         "admin_title": "## 📥 Panneau de Gestion Admin",
-        "admin_desc": "Utilisez ce panneau sur votre **Ordinateur** ou **Galerie Téléphone** pour ajouter du stock en direct.",
+        "admin_desc": "Entrez le mot de passe de sécurité pour accéder aux champs d'ajout.",
+        "pass_label": "Entrez le mot de passe :",
+        "pass_success": "Accès autorisé. Formulaire déverrouillé.",
+        "pass_error": "Mot de passe administratif incorrect.",
         "p_name": "Nom du Produit Chimique :",
         "p_cat": "Catégorie Chimique :",
         "p_price": "Prix (ex: USD ou HTG) :",
@@ -133,15 +142,17 @@ translations = {
         "msg_success": "a été publié avec succès !",
         "msg_error": "Le nom du produit et le prix sont strictement requis.",
         "catalog_title": "## 🛍️ Catalogue des Produits Chimiques Actifs",
-        "catalog_empty": "Le catalogue est actuellement vide. Utilisez le panneau latéral pour ajouter des articles.",
-        "no_img": "ℹ️ Aucun visuel importé pour ce produit.",
-        "lang_label": "Sélectionner la Langue du Système :"
+        "catalog_empty": "Le catalogue est actuellement vide. Utilisez le panneau d'administration pour ajouter des articles.",
+        "no_img": "ℹ️ Aucun visuel importé pour ce produit."
     },
     "Haitian Creole": {
         "subtitle": "Sistèm Avanse pou Jere Pwodwi Chimik ak Envantè Boutik la",
         "top_contact": "🏢 Liy Operasyon Biznis la:",
         "admin_title": "## 📥 Panèl Administratè pou Chaje Pwodwi",
-        "admin_desc": "Sèvi ak panèl sa a sou **Òdinatè** ou oswa nan **Galri Telefòn** ou pou mete pwodwi an dirèk.",
+        "admin_desc": "Mete kòd sekirite a pou ou ka jwenn aksè nan fòm lan.",
+        "pass_label": "Mete Kòd Sekirite a:",
+        "pass_success": "Aksè otorize. Panèl la louvri.",
+        "pass_error": "Kòd sekirite administratif la pa kòrèk.",
         "p_name": "Non Pwodwi Chimik la:",
         "p_cat": "Kategori Pwodwi a:",
         "p_price": "Pri (pa egzanp: USD oswa HTG):",
@@ -151,9 +162,8 @@ translations = {
         "msg_success": "pibliye avèk siksè!",
         "msg_error": "Non Pwodwi a ak Pri a obligatwa nèt.",
         "catalog_title": "## 🛍️ Katalòg Pwodwi Chimik ki Disponib",
-        "catalog_empty": "Katalòg la vid pou kounye a. Sèvi ak panèl bò a pou chaje pwodwi ou yo.",
-        "no_img": "ℹ️ Pa gen okenn foto ki chaje pou pwodwi sa a.",
-        "lang_label": "Chwazi Lang pou Sistèm lan:"
+        "catalog_empty": "Katalòg la vid pou kounye a. Sèvi ak panèl administratè a pou chaje pwodwi.",
+        "no_img": "ℹ️ Pa gen okenn foto ki chaje pou pwodwi sa a."
     }
 }
 
@@ -203,34 +213,44 @@ st.title("🧪 BONARDENTERPRISE SOFTWARE")
 st.markdown(f"### <span class='neon-text'>{txt['subtitle']}</span>", unsafe_allow_html=True)
 st.markdown("---")
 
-# ================== Sidebar Form Components ==================
+# ================== Sidebar Form Components & Security Shield ==================
 st.sidebar.markdown(txt['admin_title'])
 st.sidebar.markdown(txt['admin_desc'])
 
-with st.sidebar.form(key="upload_form", clear_on_submit=True):
-    new_name = st.text_input(txt['p_name'])
-    new_cat = st.selectbox(txt['p_cat'], ["Solvents", "Raw Materials", "Acids & Bases", "Agricultural Chemicals", "Detergents / Surfactants", "Other"])
-    new_price = st.text_input(txt['p_price'])
-    new_desc = st.text_area(txt['p_desc'])
-    
-    new_img = st.file_uploader(txt['p_img'], type=["jpg", "jpeg", "png", "webp"])
-    
-    submit_product = st.form_submit_button(txt['btn_publish'])
+# Password gateway input line
+entered_password = st.sidebar.text_input(txt['pass_label'], type="password")
 
-if submit_product:
-    if new_name and new_price:
-        img_bytes = new_img.read() if new_img is not None else None
+if entered_password:
+    if entered_password == ADMIN_PASSWORD:
+        st.sidebar.success(f"🔓 {txt['pass_success']}")
         
-        st.session_state.products.insert(0, {
-            "name": new_name,
-            "category": new_cat,
-            "price": new_price,
-            "desc": new_desc,
-            "image": img_bytes
-        })
-        st.sidebar.success(f"⚡ {new_name} {txt['msg_success']}")
+        # Only render the form elements if password matches securely
+        with st.sidebar.form(key="upload_form", clear_on_submit=True):
+            new_name = st.text_input(txt['p_name'])
+            new_cat = st.selectbox(txt['p_cat'], ["Solvents", "Raw Materials", "Acids & Bases", "Agricultural Chemicals", "Detergents / Surfactants", "Other"])
+            new_price = st.text_input(txt['p_price'])
+            new_desc = st.text_area(txt['p_desc'])
+            
+            new_img = st.file_uploader(txt['p_img'], type=["jpg", "jpeg", "png", "webp"])
+            
+            submit_product = st.form_submit_button(txt['btn_publish'])
+
+        if submit_product:
+            if new_name and new_price:
+                img_bytes = new_img.read() if new_img is not None else None
+                
+                st.session_state.products.insert(0, {
+                    "name": new_name,
+                    "category": new_cat,
+                    "price": new_price,
+                    "desc": new_desc,
+                    "image": img_bytes
+                })
+                st.sidebar.success(f"⚡ {new_name} {txt['msg_success']}")
+            else:
+                st.sidebar.error(txt['msg_error'])
     else:
-        st.sidebar.error(txt['msg_error'])
+        st.sidebar.error(f"❌ {txt['pass_error']}")
 
 # ================== Main Window Marketplace Display Grid ==================
 st.markdown(txt['catalog_title'])
