@@ -10,14 +10,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ================== Colorful, Modern Styling ==================
+# ================== Colorful, Modern Uniform Styling ==================
 st.markdown(
     """
     <style>
-    /* Vibrant, clean high-tech gradient background */
-    .stApp {
+    /* Force identical vibrant background on both the main page and sidebar wrappers */
+    .stApp, [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], section[data-testid="stSidebar"] {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%) !important;
         background-attachment: fixed !important;
+        background-color: #0f172a !important;
+    }
+    
+    /* Clean up default sidebar borders for a fully seamless appearance */
+    [data-testid="stSidebar"] {
+        border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
     
     /* Text styling overrides */
@@ -81,7 +87,6 @@ st.markdown(
 )
 
 # ================== Session State Management ==================
-# Initialize a mock database for the chemical products if it doesn't exist
 if "products" not in st.session_state:
     st.session_state.products = [
         {
@@ -115,17 +120,14 @@ with st.sidebar.form(key="upload_form", clear_on_submit=True):
     new_price = st.text_input("Price (e.g., USD or HTG):")
     new_desc = st.text_area("Product Specifications & Description:")
     
-    # This directly triggers the camera or photo gallery selection on mobile devices
     new_img = st.file_uploader("Capture Photo or Choose from Gallery", type=["jpg", "jpeg", "png", "webp"])
     
     submit_product = st.form_submit_button("Publish Product to Storefront")
 
 if submit_product:
     if new_name and new_price:
-        # Save image data if uploaded
         img_bytes = new_img.read() if new_img is not None else None
         
-        # Append to live session data
         st.session_state.products.insert(0, {
             "name": new_name,
             "category": new_cat,
@@ -143,7 +145,6 @@ st.markdown("## 🛍️ Active Chemical Catalog")
 if not st.session_state.products:
     st.info("The catalog is currently empty. Use the sidebar panel to upload your inventory items.")
 else:
-    # Build dynamic scannable columns for a rich grid feel
     cols = st.columns(3)
     for idx, prod in enumerate(st.session_state.products):
         col = cols[idx % 3]
@@ -157,7 +158,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            # Position image accurately directly inside or right under the custom card container boundaries
             if prod['image'] is not None:
                 st.image(prod['image'], use_container_width=True)
             else:
