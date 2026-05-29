@@ -4,7 +4,7 @@ from datetime import datetime
 
 # ================== Page Config ==================
 st.set_page_config(
-    page_title="BONARDENTERPRISE SOFTWARE",
+    page_title="BONARDENTERPRISE Website",
     page_icon="🧪",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -209,7 +209,7 @@ st.markdown(
 )
 
 # ================== Application Header Architecture ==================
-st.title("🧪 BONARDENTERPRISE SOFTWARE")
+st.title("BONARDENTERPRISE Website")
 st.markdown(f"### <span class='neon-text'>{txt['subtitle']}</span>", unsafe_allow_html=True)
 st.markdown("---")
 
@@ -280,7 +280,7 @@ else:
 st.markdown(
     """
     <div class="footer-container">
-        <h4 style="margin-bottom: 5px;">BONARDENTERPRISE SOFTWARE</h4>
+        <h4 style="margin-bottom: 5px;">BONARDENTERPRISE Website</h4>
         <p style="font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px;">
             Engineered, programmed, and optimized by <strong>GlobalInternet.py</strong>
         </p>
