@@ -107,7 +107,7 @@ st.markdown(
 translations = {
     "English": {
         "subtitle": "Advanced Chemical Product Management & Storefront Inventory Layer",
-        "top_contact": "🏢 Business Operations Line:",
+        "top_contact": "🏢 WhatsApp Business Line:",
         "admin_title": "## 📥 Admin Upload Panel",
         "admin_desc": "Enter security password to access product upload fields.",
         "pass_label": "Enter Security Password:",
@@ -127,7 +127,7 @@ translations = {
     },
     "French": {
         "subtitle": "Gestion Avancée des Produits Chimiques & Inventaire de la Vitrine",
-        "top_contact": "🏢 Ligne des Opérations Commerciales :",
+        "top_contact": "🏢 Ligne WhatsApp Commerciale :",
         "admin_title": "## 📥 Panneau de Gestion Admin",
         "admin_desc": "Entrez le mot de passe de sécurité pour accéder aux champs d'ajout.",
         "pass_label": "Entrez le mot de passe :",
@@ -147,7 +147,7 @@ translations = {
     },
     "Haitian Creole": {
         "subtitle": "Sistèm Avanse pou Jere Pwodwi Chimik ak Envantè Boutik la",
-        "top_contact": "🏢 Liy Operasyon Biznis la:",
+        "top_contact": "🏢 Liy WhatsApp Biznis la:",
         "admin_title": "## 📥 Panèl Administratè pou Chaje Pwodwi",
         "admin_desc": "Mete kòd sekirite a pou ou ka jwenn aksè nan fòm lan.",
         "pass_label": "Mete Kòd Sekirite a:",
@@ -193,7 +193,11 @@ if "products" not in st.session_state:
         }
     ]
 
-# ================== Top Contact Corporate Infrastructure Header ==================
+# ================== Top Contact Corporate Infrastructure Header (with WhatsApp) ==================
+# WhatsApp link using wa.me/ country code + phone number (no '+' or spaces)
+whatsapp_number = "50944108261"   # client's phone number (without +)
+whatsapp_url = f"https://wa.me/{whatsapp_number}"
+
 st.markdown(
     f"""
     <div class="client-header-bar">
@@ -201,7 +205,10 @@ st.markdown(
             📩 Business Support: <a href="mailto:Jamesonbonard97@gmail.com" style="color: #00ebc7; text-decoration: none;">Jamesonbonard97@gmail.com</a>
         </div>
         <div style="font-weight: 700; font-size: 1.05rem; color: #ffffff !important;">
-            {txt['top_contact']} <a href="tel:+50944108261" style="color: #ffffff; text-decoration: none;">+509 44 10 8261</a>
+            {txt['top_contact']} 
+            <a href="{whatsapp_url}" target="_blank" style="color: #25D366; text-decoration: none; font-weight: bold;">
+                📱 +509 44 10 8261 (Click to WhatsApp)
+            </a>
         </div>
     </div>
     """,
@@ -276,9 +283,9 @@ else:
             else:
                 st.caption(txt['no_img'])
 
-# ================== Developer Footer Core Layers ==================
+# ================== Developer Footer Core Layers (also include WhatsApp link) ==================
 st.markdown(
-    """
+    f"""
     <div class="footer-container">
         <h4 style="margin-bottom: 5px;">BONARDENTERPRISE Website</h4>
         <p style="font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px;">
@@ -287,7 +294,7 @@ st.markdown(
         <p style="font-size: 0.9rem; color: #00ebc7 !important; font-weight: 600;">
             📧 Contact Engineering: <a href="mailto:deslandes78@gmail.com" style="color: #00ebc7; text-decoration: none;">deslandes78@gmail.com</a>
             &nbsp;&nbsp;|&nbsp;&nbsp; 
-            📞 Core Infrastructure Line: <a href="tel:+50947385663" style="color: #00ebc7; text-decoration: none;">(509)-47385663</a>
+            📞 Client WhatsApp: <a href="{whatsapp_url}" target="_blank" style="color: #25D366; text-decoration: none;">+509 44 10 8261 (Click to chat)</a>
         </p>
     </div>
     """,
