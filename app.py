@@ -116,7 +116,6 @@ class WebAppShield:
                     st.stop()
         st.sidebar.markdown("🛡️ **Global Security Shield active**")
 
-# Initialise the shield
 shield = WebAppShield(
     app_name="BonardEnterprise",
     api_key="gl-MssTDLE9cATE4Iu7_tQkcxaFWcwwMr3e7S_Mdwgg",
@@ -144,10 +143,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ================== Security Configuration ==================
 ADMIN_PASSWORD = "BonardAdmin2026"
-
-# ================== Apply Shield Protection ==================
 shield.protect_streamlit()
 
 # ================== Styling (includes dark comment theme) ==================
@@ -166,7 +162,6 @@ st.markdown(
     h1, h2, h3, h4, p, label, .stMarkdown, .stSelectbox label {
         color: #ffffff !important;
     }
-    /* Top contact bar */
     .client-header-bar {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -178,7 +173,6 @@ st.markdown(
         align-items: center;
         flex-wrap: wrap;
     }
-    /* Product cards */
     .product-card {
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
@@ -215,14 +209,12 @@ st.markdown(
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 20px 20px 0 0;
     }
-    /* Input fields */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
         background-color: rgba(0, 0, 0, 0.5) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px;
     }
-    /* ----- DARK COMMENT SECTION STYLES ----- */
     .comment-box {
         background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(5px);
@@ -241,7 +233,6 @@ st.markdown(
         color: #ffffff !important;
         font-size: 0.9rem;
     }
-    /* Reply button inside comment */
     .comment-box .stButton button {
         background: rgba(0, 235, 199, 0.2) !important;
         border: 1px solid #00ebc7 !important;
@@ -253,7 +244,6 @@ st.markdown(
         background: #00ebc7 !important;
         color: #0f172a !important;
     }
-    /* Popover (reply form) styling */
     div[data-testid="stPopover"] input,
     div[data-testid="stPopover"] textarea {
         background-color: rgba(0, 0, 0, 0.7) !important;
@@ -264,7 +254,6 @@ st.markdown(
     div[data-testid="stPopover"] label {
         color: #00ebc7 !important;
     }
-    /* Main comment form (below products) */
     form .stTextInput input, 
     form .stTextArea textarea {
         background-color: rgba(0, 0, 0, 0.5) !important;
@@ -289,7 +278,6 @@ st.markdown(
         transform: scale(1.02);
         box-shadow: 0 0 15px rgba(0,235,199,0.3);
     }
-    /* Like button */
     div[data-testid="column"] .stButton button {
         background: transparent !important;
         border: none !important;
@@ -297,7 +285,7 @@ st.markdown(
         font-size: 0.8rem;
         padding: 0 !important;
     }
-    /* Delete button */
+    /* Delete button styling */
     .delete-button button {
         background: rgba(255, 0, 0, 0.2) !important;
         border: 1px solid #ff4444 !important;
@@ -309,7 +297,6 @@ st.markdown(
         background: #ff4444 !important;
         color: white !important;
     }
-    /* Expander (comments expander) */
     .streamlit-expanderHeader {
         color: #00ebc7 !important;
         background: rgba(255,255,255,0.05) !important;
@@ -423,14 +410,13 @@ def get_comments(product_key):
         return []
 
 def add_comment(product_key, username, comment, parent_id=None, reply_to_username=""):
-    """Insert a new comment with a unique deletion key (UUID)."""
     if not SUPABASE_AVAILABLE:
         return False, None
     safe_comment = comment.strip()
     safe_username = username.strip() if username else "Anonymous"
     if not safe_comment:
         return False, None
-    edit_key = str(uuid.uuid4())  # generate unique deletion token
+    edit_key = str(uuid.uuid4())
     try:
         result = supabase.table("comments").insert({
             "project_key": product_key,
@@ -451,14 +437,12 @@ def add_comment(product_key, username, comment, parent_id=None, reply_to_usernam
         return False, None
 
 def delete_comment(comment_id, edit_key):
-    """Delete a comment only if the provided edit_key matches the one in DB."""
     if not SUPABASE_AVAILABLE:
         return False
     try:
-        # Delete the comment and all its replies (cascade will happen if foreign key is set, but we also manually delete replies)
-        # First, delete replies (since they reference parent_id)
+        # Delete replies first
         supabase.table("comments").delete().eq("parent_id", comment_id).execute()
-        # Then delete the comment itself, only if edit_key matches
+        # Delete the comment itself only if edit_key matches
         result = supabase.table("comments").delete().eq("id", comment_id).eq("edit_key", edit_key).execute()
         return len(result.data) > 0
     except Exception as e:
@@ -487,6 +471,7 @@ else:
     st.sidebar.success("✅ Comments active (Supabase connected)")
 
 st.sidebar.markdown("---")
+st.sidebar.info("🗑️ **Delete your own comments:** After posting a comment, a red **Delete** button will appear next to it. Only comments made after this update can be deleted (older comments don't have a deletion key).")
 
 # ================== Session State ==================
 if "products" not in st.session_state:
@@ -509,7 +494,6 @@ if "products" not in st.session_state:
         }
     ]
 
-# Store edit keys in session state (persists across refreshes)
 if "comment_edit_keys" not in st.session_state:
     st.session_state.comment_edit_keys = {}
 
@@ -534,7 +518,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ================== Header ==================
 st.title("BONARDENTERPRISE Website")
 st.markdown(f"### <span class='neon-text'>{txt['subtitle']}</span>", unsafe_allow_html=True)
 st.markdown("---")
@@ -547,7 +530,6 @@ entered_password = st.sidebar.text_input(txt['pass_label'], type="password")
 
 if entered_password == ADMIN_PASSWORD:
     st.sidebar.success(f"🔓 {txt['pass_success']}")
-    
     with st.sidebar.form(key="upload_form", clear_on_submit=True):
         new_name = st.text_input(txt['p_name'])
         new_cat = st.selectbox(txt['p_cat'], ["Solvents", "Raw Materials", "Acids & Bases", "Agricultural Chemicals", "Detergents / Surfactants", "Other"])
@@ -555,7 +537,6 @@ if entered_password == ADMIN_PASSWORD:
         new_desc = st.text_area(txt['p_desc'])
         new_img = st.file_uploader(txt['p_img'], type=["jpg", "jpeg", "png", "webp"])
         submit_product = st.form_submit_button(txt['btn_publish'])
-    
     if submit_product:
         if new_name and new_price:
             img_bytes = new_img.read() if new_img is not None else None
@@ -592,22 +573,18 @@ else:
                 <p style='font-size:0.9rem; opacity:0.8; min-height:60px;'>{prod['desc']}</p>
             </div>
             """, unsafe_allow_html=True)
-            
             if prod['image'] is not None:
                 st.image(prod['image'], use_container_width=True)
             else:
                 st.caption(txt['no_img'])
-            
-            # ----- Comment Section for this product -----
+
             product_key = prod['product_key']
             comments = get_comments(product_key)
-            
+
             with st.expander(f"{txt['comments']} ({len([c for c in comments if c.get('parent_id') is None])})"):
                 def display_comment(comment, level=0):
-                    # Check if current user can delete this comment
                     can_delete = (comment['id'] in st.session_state.comment_edit_keys and 
                                  st.session_state.comment_edit_keys[comment['id']] == comment.get('edit_key', ''))
-                    
                     st.markdown(f"""
                     <div class="comment-box" style="margin-left: {level*20}px;">
                         <div class="comment-meta">
@@ -616,12 +593,13 @@ else:
                         <p style="margin: 0 0 0.2rem 0;">{comment['comment']}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    col_actions = st.columns([1, 1, 2])  # like, reply, delete
-                    with col_actions[0]:
+                    # Action buttons: like, reply, delete
+                    col_like, col_reply, col_delete = st.columns([1, 1, 1])
+                    with col_like:
                         if st.button(f"❤️ {comment['likes']}", key=f"like_{comment['id']}"):
                             add_like(comment['id'])
                             st.rerun()
-                    with col_actions[1]:
+                    with col_reply:
                         with st.popover("💬 Reply", use_container_width=False):
                             reply_name = st.text_input(txt['your_name'], key=f"reply_name_{comment['id']}", placeholder="Anonymous")
                             reply_text = st.text_area(txt['your_comment'], key=f"reply_text_{comment['id']}", height=68)
@@ -629,31 +607,32 @@ else:
                                 if reply_text.strip():
                                     success, new_comment_data = add_comment(product_key, reply_name, reply_text, parent_id=comment['id'], reply_to_username=comment['username'])
                                     if success and new_comment_data:
-                                        # Store edit key for the new reply
                                         st.session_state.comment_edit_keys[new_comment_data["id"]] = new_comment_data["edit_key"]
                                     st.rerun()
                                 else:
                                     st.warning("Please enter a reply.")
                     if can_delete:
-                        with col_actions[2]:
-                            if st.button(txt['delete'], key=f"delete_{comment['id']}", help="Delete your comment", use_container_width=False):
+                        with col_delete:
+                            # Wrap button in a div with class "delete-button" for red styling
+                            st.markdown('<div class="delete-button">', unsafe_allow_html=True)
+                            if st.button(txt['delete'], key=f"delete_{comment['id']}", use_container_width=False):
                                 if delete_comment(comment['id'], comment.get('edit_key', '')):
-                                    # Also remove from session state
                                     st.session_state.comment_edit_keys.pop(comment['id'], None)
                                     st.rerun()
                                 else:
-                                    st.error("Could not delete comment. It may have already been removed.")
-                    
-                    # Display replies recursively
+                                    st.error("Could not delete comment.")
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+                    # Show replies
                     replies = [c for c in comments if c.get("parent_id") == comment['id']]
                     for reply in replies:
                         display_comment(reply, level + 1)
-                
+
                 # Show top-level comments
                 top_comments = [c for c in comments if c.get("parent_id") is None]
                 for comment in top_comments:
                     display_comment(comment)
-                
+
                 if SUPABASE_AVAILABLE:
                     st.markdown("---")
                     with st.form(key=f"new_comment_{product_key}"):
@@ -663,7 +642,6 @@ else:
                             if comment_text.strip():
                                 success, new_comment_data = add_comment(product_key, name, comment_text, parent_id=None)
                                 if success and new_comment_data:
-                                    # Store edit key so user can delete this comment
                                     st.session_state.comment_edit_keys[new_comment_data["id"]] = new_comment_data["edit_key"]
                                 st.rerun()
                             else:
