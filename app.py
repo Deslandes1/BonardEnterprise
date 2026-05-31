@@ -123,7 +123,7 @@ shield = WebAppShield(
 )
 
 # ============================================================
-# Supabase setup (with graceful fallback if secrets missing)
+# Supabase setup (graceful fallback)
 # ============================================================
 try:
     SUPABASE_URL = st.secrets["supabase"]["url"]
@@ -131,10 +131,10 @@ try:
     from supabase import create_client, Client
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     SUPABASE_AVAILABLE = True
-except (KeyError, ImportError, Exception) as e:
+except (KeyError, ImportError, Exception):
     SUPABASE_AVAILABLE = False
     supabase = None
-    st.sidebar.warning("⚠️ Comments are disabled: Supabase secrets not configured. Add [supabase] url and key to your secrets.")
+    # Warning will be shown in sidebar later
 
 # ================== Page Config ==================
 st.set_page_config(
@@ -150,10 +150,11 @@ ADMIN_PASSWORD = "BonardAdmin2026"
 # ================== Apply Shield Protection ==================
 shield.protect_streamlit()
 
-# ================== Styling ==================
+# ================== Styling (includes dark comment theme) ==================
 st.markdown(
     """
     <style>
+    /* Main background gradient */
     .stApp, [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], section[data-testid="stSidebar"] {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%) !important;
         background-attachment: fixed !important;
@@ -165,6 +166,7 @@ st.markdown(
     h1, h2, h3, h4, p, label, .stMarkdown, .stSelectbox label {
         color: #ffffff !important;
     }
+    /* Top contact bar */
     .client-header-bar {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -176,6 +178,7 @@ st.markdown(
         align-items: center;
         flex-wrap: wrap;
     }
+    /* Product cards */
     .product-card {
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
@@ -212,21 +215,96 @@ st.markdown(
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 20px 20px 0 0;
     }
+    /* Input fields */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
-        background-color: rgba(255, 255, 255, 0.07) !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px;
     }
+    /* ----- DARK COMMENT SECTION STYLES ----- */
     .comment-box {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(5px);
         border-radius: 12px;
-        padding: 10px;
-        margin: 5px 0;
+        padding: 12px;
+        margin: 8px 0;
         border-left: 3px solid #00ebc7;
+        color: #ffffff !important;
     }
     .comment-meta {
         font-size: 0.7rem;
-        color: #aaa;
+        color: #00ebc7 !important;
+        margin-bottom: 5px;
+    }
+    .comment-box p {
+        color: #ffffff !important;
+        font-size: 0.9rem;
+    }
+    /* Reply button inside comment */
+    .comment-box .stButton button {
+        background: rgba(0, 235, 199, 0.2) !important;
+        border: 1px solid #00ebc7 !important;
+        color: #00ebc7 !important;
+        font-size: 0.7rem;
+        padding: 2px 8px !important;
+    }
+    .comment-box .stButton button:hover {
+        background: #00ebc7 !important;
+        color: #0f172a !important;
+    }
+    /* Popover (reply form) styling */
+    div[data-testid="stPopover"] input,
+    div[data-testid="stPopover"] textarea {
+        background-color: rgba(0, 0, 0, 0.7) !important;
+        color: white !important;
+        border: 1px solid #00ebc7 !important;
+        border-radius: 8px;
+    }
+    div[data-testid="stPopover"] label {
+        color: #00ebc7 !important;
+    }
+    /* Main comment form (below products) */
+    form .stTextInput input, 
+    form .stTextArea textarea {
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        color: white !important;
+        border: 1px solid #7928ca !important;
+        border-radius: 8px;
+    }
+    form .stTextInput label, 
+    form .stTextArea label {
+        color: #00ebc7 !important;
+        font-weight: 500;
+    }
+    form .stButton button {
+        background: linear-gradient(90deg, #ff007f, #7928ca) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 30px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: bold;
+    }
+    form .stButton button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(0,235,199,0.3);
+    }
+    /* Like button */
+    div[data-testid="column"] .stButton button {
+        background: transparent !important;
+        border: none !important;
+        color: #ff007f !important;
+        font-size: 0.8rem;
+        padding: 0 !important;
+    }
+    /* Expander (comments expander) */
+    .streamlit-expanderHeader {
+        color: #00ebc7 !important;
+        background: rgba(255,255,255,0.05) !important;
+        border-radius: 20px;
+    }
+    .streamlit-expanderContent {
+        background: transparent !important;
     }
     </style>
     """,
@@ -259,7 +337,8 @@ translations = {
         "your_name": "Your name (optional)",
         "your_comment": "Your comment",
         "reply": "Reply",
-        "like": "👍 Like"
+        "like": "👍 Like",
+        "disable_comments_msg": "💬 Comments are currently disabled because Supabase secrets are not configured. To enable comments, add your Supabase URL and key to the app secrets."
     },
     "French": {
         "subtitle": "Gestion Avancée des Produits Chimiques & Inventaire de la Vitrine",
@@ -285,7 +364,8 @@ translations = {
         "your_name": "Votre nom (optionnel)",
         "your_comment": "Votre commentaire",
         "reply": "Répondre",
-        "like": "👍 J'aime"
+        "like": "👍 J'aime",
+        "disable_comments_msg": "💬 Les commentaires sont actuellement désactivés car les secrets Supabase ne sont pas configurés. Pour activer les commentaires, ajoutez votre URL et votre clé Supabase aux secrets de l'application."
     },
     "Haitian Creole": {
         "subtitle": "Sistèm Avanse pou Jere Pwodwi Chimik ak Envantè Boutik la",
@@ -311,11 +391,12 @@ translations = {
         "your_name": "Non ou (si ou vle)",
         "your_comment": "Kòmantè ou",
         "reply": "Reponn",
-        "like": "👍 Renmen"
+        "like": "👍 Renmen",
+        "disable_comments_msg": "💬 Kòmantè yo aktive paske kle Supabase yo pa konfigire. Pou aktive kòmantè yo, ajoute URL ak kle Supabase ou nan secrets aplikasyon an."
     }
 }
 
-# ================== Supabase Comment Functions (only if available) ==================
+# ================== Supabase Comment Functions ==================
 def get_comments(product_key):
     if not SUPABASE_AVAILABLE:
         return []
@@ -328,7 +409,6 @@ def get_comments(product_key):
 
 def add_comment(product_key, username, comment, parent_id=0, reply_to_username=""):
     if not SUPABASE_AVAILABLE:
-        st.warning("Comments are disabled because Supabase is not configured.")
         return False
     safe_comment = comment.strip()
     safe_username = username.strip() if username else "Anonymous"
@@ -364,6 +444,12 @@ def add_like(comment_id):
 st.sidebar.markdown("## 🌐 Language Localization Layer")
 selected_lang = st.sidebar.selectbox("", ["English", "French", "Haitian Creole"], index=0)
 txt = translations[selected_lang]
+
+# Show Supabase status in sidebar
+if not SUPABASE_AVAILABLE:
+    st.sidebar.warning("⚠️ Comments disabled: Supabase secrets missing. Add [supabase] url/key to enable.")
+else:
+    st.sidebar.success("✅ Comments active (Supabase connected)")
 
 st.sidebar.markdown("---")
 
@@ -473,7 +559,7 @@ else:
             else:
                 st.caption(txt['no_img'])
             
-            # ----- Comment Section -----
+            # ----- Comment Section for this product -----
             product_key = prod['product_key']
             comments = get_comments(product_key)
             
@@ -522,7 +608,7 @@ else:
                             else:
                                 st.warning("Please write a comment.")
                 else:
-                    st.info("💬 Comments are currently disabled because Supabase secrets are not configured. To enable comments, add your Supabase URL and key to the app secrets.")
+                    st.info(txt['disable_comments_msg'])
 
 # ================== Footer ==================
 st.markdown(
