@@ -4,6 +4,7 @@ from datetime import datetime
 import re
 import json
 import requests
+import uuid
 from typing import Any, Dict, Optional, Tuple
 
 # ============================================================
@@ -134,7 +135,6 @@ try:
 except (KeyError, ImportError, Exception):
     SUPABASE_AVAILABLE = False
     supabase = None
-    # Warning will be shown in sidebar later
 
 # ================== Page Config ==================
 st.set_page_config(
@@ -297,6 +297,18 @@ st.markdown(
         font-size: 0.8rem;
         padding: 0 !important;
     }
+    /* Delete button */
+    .delete-button button {
+        background: rgba(255, 0, 0, 0.2) !important;
+        border: 1px solid #ff4444 !important;
+        color: #ff4444 !important;
+        font-size: 0.7rem;
+        padding: 2px 8px !important;
+    }
+    .delete-button button:hover {
+        background: #ff4444 !important;
+        color: white !important;
+    }
     /* Expander (comments expander) */
     .streamlit-expanderHeader {
         color: #00ebc7 !important;
@@ -338,6 +350,7 @@ translations = {
         "your_comment": "Your comment",
         "reply": "Reply",
         "like": "👍 Like",
+        "delete": "🗑️ Delete",
         "disable_comments_msg": "💬 Comments are currently disabled because Supabase secrets are not configured. To enable comments, add your Supabase URL and key to the app secrets."
     },
     "French": {
@@ -365,6 +378,7 @@ translations = {
         "your_comment": "Votre commentaire",
         "reply": "Répondre",
         "like": "👍 J'aime",
+        "delete": "🗑️ Supprimer",
         "disable_comments_msg": "💬 Les commentaires sont actuellement désactivés car les secrets Supabase ne sont pas configurés. Pour activer les commentaires, ajoutez votre URL et votre clé Supabase aux secrets de l'application."
     },
     "Haitian Creole": {
@@ -392,11 +406,12 @@ translations = {
         "your_comment": "Kòmantè ou",
         "reply": "Reponn",
         "like": "👍 Renmen",
+        "delete": "🗑️ Efase",
         "disable_comments_msg": "💬 Kòmantè yo aktive paske kle Supabase yo pa konfigire. Pou aktive kòmantè yo, ajoute URL ak kle Supabase ou nan secrets aplikasyon an."
     }
 }
 
-# ================== Supabase Comment Functions (fixed: parent_id=None) ==================
+# ================== Supabase Comment Functions with Deletion ==================
 def get_comments(product_key):
     if not SUPABASE_AVAILABLE:
         return []
@@ -408,26 +423,46 @@ def get_comments(product_key):
         return []
 
 def add_comment(product_key, username, comment, parent_id=None, reply_to_username=""):
-    """Insert a new comment. parent_id=None for top-level, actual id for replies."""
+    """Insert a new comment with a unique deletion key (UUID)."""
     if not SUPABASE_AVAILABLE:
-        return False
+        return False, None
     safe_comment = comment.strip()
     safe_username = username.strip() if username else "Anonymous"
     if not safe_comment:
-        return False
+        return False, None
+    edit_key = str(uuid.uuid4())  # generate unique deletion token
     try:
-        supabase.table("comments").insert({
+        result = supabase.table("comments").insert({
             "project_key": product_key,
             "username": safe_username,
             "comment": safe_comment,
             "timestamp": datetime.now().isoformat(),
             "likes": 0,
-            "parent_id": parent_id,   # None for top-level, integer for replies
-            "reply_to_username": reply_to_username
+            "parent_id": parent_id,
+            "reply_to_username": reply_to_username,
+            "edit_key": edit_key
         }).execute()
-        return True
+        if result.data and len(result.data) > 0:
+            new_comment_id = result.data[0]["id"]
+            return True, {"id": new_comment_id, "edit_key": edit_key}
+        return False, None
     except Exception as e:
         st.error(f"Error adding comment: {e}")
+        return False, None
+
+def delete_comment(comment_id, edit_key):
+    """Delete a comment only if the provided edit_key matches the one in DB."""
+    if not SUPABASE_AVAILABLE:
+        return False
+    try:
+        # Delete the comment and all its replies (cascade will happen if foreign key is set, but we also manually delete replies)
+        # First, delete replies (since they reference parent_id)
+        supabase.table("comments").delete().eq("parent_id", comment_id).execute()
+        # Then delete the comment itself, only if edit_key matches
+        result = supabase.table("comments").delete().eq("id", comment_id).eq("edit_key", edit_key).execute()
+        return len(result.data) > 0
+    except Exception as e:
+        st.error(f"Delete error: {e}")
         return False
 
 def add_like(comment_id):
@@ -446,7 +481,6 @@ st.sidebar.markdown("## 🌐 Language Localization Layer")
 selected_lang = st.sidebar.selectbox("", ["English", "French", "Haitian Creole"], index=0)
 txt = translations[selected_lang]
 
-# Show Supabase status in sidebar
 if not SUPABASE_AVAILABLE:
     st.sidebar.warning("⚠️ Comments disabled: Supabase secrets missing. Add [supabase] url/key to enable.")
 else:
@@ -474,6 +508,10 @@ if "products" not in st.session_state:
             "product_key": "product_1"
         }
     ]
+
+# Store edit keys in session state (persists across refreshes)
+if "comment_edit_keys" not in st.session_state:
+    st.session_state.comment_edit_keys = {}
 
 # ================== Top Contact (WhatsApp) ==================
 whatsapp_number = "50944108261"
@@ -566,6 +604,10 @@ else:
             
             with st.expander(f"{txt['comments']} ({len([c for c in comments if c.get('parent_id') is None])})"):
                 def display_comment(comment, level=0):
+                    # Check if current user can delete this comment
+                    can_delete = (comment['id'] in st.session_state.comment_edit_keys and 
+                                 st.session_state.comment_edit_keys[comment['id']] == comment.get('edit_key', ''))
+                    
                     st.markdown(f"""
                     <div class="comment-box" style="margin-left: {level*20}px;">
                         <div class="comment-meta">
@@ -574,26 +616,40 @@ else:
                         <p style="margin: 0 0 0.2rem 0;">{comment['comment']}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    col1, col2 = st.columns([1, 4])
-                    with col1:
+                    col_actions = st.columns([1, 1, 2])  # like, reply, delete
+                    with col_actions[0]:
                         if st.button(f"❤️ {comment['likes']}", key=f"like_{comment['id']}"):
                             add_like(comment['id'])
                             st.rerun()
-                    with col2:
+                    with col_actions[1]:
                         with st.popover("💬 Reply", use_container_width=False):
                             reply_name = st.text_input(txt['your_name'], key=f"reply_name_{comment['id']}", placeholder="Anonymous")
                             reply_text = st.text_area(txt['your_comment'], key=f"reply_text_{comment['id']}", height=68)
                             if st.button(txt['post_comment'], key=f"reply_btn_{comment['id']}"):
                                 if reply_text.strip():
-                                    add_comment(product_key, reply_name, reply_text, parent_id=comment['id'], reply_to_username=comment['username'])
+                                    success, new_comment_data = add_comment(product_key, reply_name, reply_text, parent_id=comment['id'], reply_to_username=comment['username'])
+                                    if success and new_comment_data:
+                                        # Store edit key for the new reply
+                                        st.session_state.comment_edit_keys[new_comment_data["id"]] = new_comment_data["edit_key"]
                                     st.rerun()
                                 else:
                                     st.warning("Please enter a reply.")
+                    if can_delete:
+                        with col_actions[2]:
+                            if st.button(txt['delete'], key=f"delete_{comment['id']}", help="Delete your comment", use_container_width=False):
+                                if delete_comment(comment['id'], comment.get('edit_key', '')):
+                                    # Also remove from session state
+                                    st.session_state.comment_edit_keys.pop(comment['id'], None)
+                                    st.rerun()
+                                else:
+                                    st.error("Could not delete comment. It may have already been removed.")
+                    
+                    # Display replies recursively
                     replies = [c for c in comments if c.get("parent_id") == comment['id']]
                     for reply in replies:
                         display_comment(reply, level + 1)
                 
-                # Top-level comments are those with parent_id == None
+                # Show top-level comments
                 top_comments = [c for c in comments if c.get("parent_id") is None]
                 for comment in top_comments:
                     display_comment(comment)
@@ -605,7 +661,10 @@ else:
                         comment_text = st.text_area(txt['your_comment'], key=f"text_{product_key}", height=100)
                         if st.form_submit_button(txt['post_comment']):
                             if comment_text.strip():
-                                add_comment(product_key, name, comment_text, parent_id=None)
+                                success, new_comment_data = add_comment(product_key, name, comment_text, parent_id=None)
+                                if success and new_comment_data:
+                                    # Store edit key so user can delete this comment
+                                    st.session_state.comment_edit_keys[new_comment_data["id"]] = new_comment_data["edit_key"]
                                 st.rerun()
                             else:
                                 st.warning("Please write a comment.")
