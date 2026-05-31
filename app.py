@@ -4,11 +4,10 @@ from datetime import datetime
 import re
 import json
 import requests
-from supabase import create_client, Client
 from typing import Any, Dict, Optional, Tuple
 
 # ============================================================
-# GLOBAL SECURITY SHIELD (EMBEDDED) – same as GlobalInternet.py
+# GLOBAL SECURITY SHIELD (EMBEDDED)
 # ============================================================
 DEFAULT_PATTERNS = {
     "sql_injection": [
@@ -116,19 +115,26 @@ class WebAppShield:
                     st.stop()
         st.sidebar.markdown("🛡️ **Global Security Shield active**")
 
-# Initialise the shield (use your existing API key – it's just for logging)
+# Initialise the shield
 shield = WebAppShield(
     app_name="BonardEnterprise",
-    api_key="gl-MssTDLE9cATE4Iu7_tQkcxaFWcwwMr3e7S_Mdwgg",  # same key as your main site
+    api_key="gl-MssTDLE9cATE4Iu7_tQkcxaFWcwwMr3e7S_Mdwgg",
     dashboard_url="https://global-security-shield-built-by-gesner-deslandes-tul974fmulf5q.streamlit.app/?log="
 )
 
 # ============================================================
-# Supabase setup for comments
+# Supabase setup (with graceful fallback if secrets missing)
 # ============================================================
-SUPABASE_URL = st.secrets["supabase"]["url"]
-SUPABASE_KEY = st.secrets["supabase"]["key"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+try:
+    SUPABASE_URL = st.secrets["supabase"]["url"]
+    SUPABASE_KEY = st.secrets["supabase"]["key"]
+    from supabase import create_client, Client
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    SUPABASE_AVAILABLE = True
+except (KeyError, ImportError, Exception) as e:
+    SUPABASE_AVAILABLE = False
+    supabase = None
+    st.sidebar.warning("⚠️ Comments are disabled: Supabase secrets not configured. Add [supabase] url and key to your secrets.")
 
 # ================== Page Config ==================
 st.set_page_config(
@@ -144,28 +150,21 @@ ADMIN_PASSWORD = "BonardAdmin2026"
 # ================== Apply Shield Protection ==================
 shield.protect_streamlit()
 
-# ================== Colorful, Modern Uniform Styling ==================
+# ================== Styling ==================
 st.markdown(
     """
     <style>
-    /* Force identical vibrant background on both the main page and sidebar wrappers */
     .stApp, [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], section[data-testid="stSidebar"] {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%) !important;
         background-attachment: fixed !important;
         background-color: #0f172a !important;
     }
-    
-    /* Clean up default sidebar borders */
     [data-testid="stSidebar"] {
         border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
-    
-    /* Text styling */
     h1, h2, h3, h4, p, label, .stMarkdown, .stSelectbox label {
         color: #ffffff !important;
     }
-    
-    /* Top Contact Bar Header */
     .client-header-bar {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -177,8 +176,6 @@ st.markdown(
         align-items: center;
         flex-wrap: wrap;
     }
-    
-    /* Product Cards */
     .product-card {
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
@@ -193,8 +190,6 @@ st.markdown(
         transform: translateY(-5px);
         border-color: #00ebc7;
     }
-    
-    /* Category Badges */
     .category-badge {
         background: linear-gradient(90deg, #ff007f, #7928ca);
         color: white;
@@ -205,14 +200,10 @@ st.markdown(
         display: inline-block;
         margin-bottom: 10px;
     }
-    
-    /* Neon accents */
     .neon-text {
         color: #00ebc7 !important;
         text-shadow: 0 0 10px rgba(0, 235, 199, 0.5);
     }
-    
-    /* Footer */
     .footer-container {
         text-align: center;
         margin-top: 70px;
@@ -221,15 +212,11 @@ st.markdown(
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 20px 20px 0 0;
     }
-    
-    /* Input fields */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
         background-color: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
-    
-    /* Comment box */
     .comment-box {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 12px;
@@ -246,7 +233,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ================== Localization Dictionary Matrix ==================
+# ================== Localization ==================
 translations = {
     "English": {
         "subtitle": "Advanced Chemical Product Management & Storefront Inventory Layer",
@@ -328,9 +315,10 @@ translations = {
     }
 }
 
-# ================== Supabase Comment Functions ==================
+# ================== Supabase Comment Functions (only if available) ==================
 def get_comments(product_key):
-    """Retrieve all comments for a given product (top-level and replies)."""
+    if not SUPABASE_AVAILABLE:
+        return []
     try:
         response = supabase.table("comments").select("*").eq("project_key", product_key).order("timestamp", desc=False).execute()
         return response.data
@@ -339,7 +327,9 @@ def get_comments(product_key):
         return []
 
 def add_comment(product_key, username, comment, parent_id=0, reply_to_username=""):
-    """Insert a new comment (public – no login required)."""
+    if not SUPABASE_AVAILABLE:
+        st.warning("Comments are disabled because Supabase is not configured.")
+        return False
     safe_comment = comment.strip()
     safe_username = username.strip() if username else "Anonymous"
     if not safe_comment:
@@ -360,23 +350,24 @@ def add_comment(product_key, username, comment, parent_id=0, reply_to_username="
         return False
 
 def add_like(comment_id):
-    """Increment the like count for a comment."""
+    if not SUPABASE_AVAILABLE:
+        return
     try:
         current = supabase.table("comments").select("likes").eq("id", comment_id).execute()
         if current.data:
             new_likes = current.data[0]["likes"] + 1
             supabase.table("comments").update({"likes": new_likes}).eq("id", comment_id).execute()
-    except Exception as e:
-        st.warning(f"Could not update like: {e}")
+    except Exception:
+        pass
 
-# ================== Sidebar Language Engine ==================
+# ================== Sidebar Language ==================
 st.sidebar.markdown("## 🌐 Language Localization Layer")
 selected_lang = st.sidebar.selectbox("", ["English", "French", "Haitian Creole"], index=0)
 txt = translations[selected_lang]
 
 st.sidebar.markdown("---")
 
-# ================== Session State Mock Database ==================
+# ================== Session State ==================
 if "products" not in st.session_state:
     st.session_state.products = [
         {
@@ -397,7 +388,7 @@ if "products" not in st.session_state:
         }
     ]
 
-# ================== Top Contact Header (WhatsApp) ==================
+# ================== Top Contact (WhatsApp) ==================
 whatsapp_number = "50944108261"
 whatsapp_url = f"https://wa.me/{whatsapp_number}"
 
@@ -418,12 +409,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ================== Application Header ==================
+# ================== Header ==================
 st.title("BONARDENTERPRISE Website")
 st.markdown(f"### <span class='neon-text'>{txt['subtitle']}</span>", unsafe_allow_html=True)
 st.markdown("---")
 
-# ================== Admin Sidebar Panel ==================
+# ================== Admin Panel ==================
 st.sidebar.markdown(txt['admin_title'])
 st.sidebar.markdown(txt['admin_desc'])
 
@@ -458,13 +449,12 @@ if entered_password == ADMIN_PASSWORD:
 elif entered_password:
     st.sidebar.error(f"❌ {txt['pass_error']}")
 
-# ================== Product Catalog + Comment Section ==================
+# ================== Product Catalog ==================
 st.markdown(txt['catalog_title'])
 
 if not st.session_state.products:
     st.info(txt['catalog_empty'])
 else:
-    # Display products in a 3‑column grid
     cols = st.columns(3)
     for idx, prod in enumerate(st.session_state.products):
         col = cols[idx % 3]
@@ -483,12 +473,11 @@ else:
             else:
                 st.caption(txt['no_img'])
             
-            # ----- Comment Section for this product -----
+            # ----- Comment Section -----
             product_key = prod['product_key']
             comments = get_comments(product_key)
             
             with st.expander(f"{txt['comments']} ({len([c for c in comments if c.get('parent_id') == 0])})"):
-                # Display existing comments (top-level only, then replies recursively)
                 def display_comment(comment, level=0):
                     st.markdown(f"""
                     <div class="comment-box" style="margin-left: {level*20}px;">
@@ -513,27 +502,27 @@ else:
                                     st.rerun()
                                 else:
                                     st.warning("Please enter a reply.")
-                    # Show replies
                     replies = [c for c in comments if c.get("parent_id") == comment['id']]
                     for reply in replies:
                         display_comment(reply, level + 1)
                 
-                # Show all top-level comments
                 top_comments = [c for c in comments if c.get("parent_id") == 0]
                 for comment in top_comments:
                     display_comment(comment)
                 
-                # Form to add a new top‑level comment
-                st.markdown("---")
-                with st.form(key=f"new_comment_{product_key}"):
-                    name = st.text_input(txt['your_name'], key=f"name_{product_key}", placeholder="Anonymous")
-                    comment_text = st.text_area(txt['your_comment'], key=f"text_{product_key}", height=100)
-                    if st.form_submit_button(txt['post_comment']):
-                        if comment_text.strip():
-                            add_comment(product_key, name, comment_text)
-                            st.rerun()
-                        else:
-                            st.warning("Please write a comment.")
+                if SUPABASE_AVAILABLE:
+                    st.markdown("---")
+                    with st.form(key=f"new_comment_{product_key}"):
+                        name = st.text_input(txt['your_name'], key=f"name_{product_key}", placeholder="Anonymous")
+                        comment_text = st.text_area(txt['your_comment'], key=f"text_{product_key}", height=100)
+                        if st.form_submit_button(txt['post_comment']):
+                            if comment_text.strip():
+                                add_comment(product_key, name, comment_text)
+                                st.rerun()
+                            else:
+                                st.warning("Please write a comment.")
+                else:
+                    st.info("💬 Comments are currently disabled because Supabase secrets are not configured. To enable comments, add your Supabase URL and key to the app secrets.")
 
 # ================== Footer ==================
 st.markdown(
