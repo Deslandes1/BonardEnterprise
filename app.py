@@ -396,7 +396,7 @@ translations = {
     }
 }
 
-# ================== Supabase Comment Functions ==================
+# ================== Supabase Comment Functions (fixed: parent_id=None) ==================
 def get_comments(product_key):
     if not SUPABASE_AVAILABLE:
         return []
@@ -407,7 +407,8 @@ def get_comments(product_key):
         st.error(f"Error loading comments: {e}")
         return []
 
-def add_comment(product_key, username, comment, parent_id=0, reply_to_username=""):
+def add_comment(product_key, username, comment, parent_id=None, reply_to_username=""):
+    """Insert a new comment. parent_id=None for top-level, actual id for replies."""
     if not SUPABASE_AVAILABLE:
         return False
     safe_comment = comment.strip()
@@ -421,7 +422,7 @@ def add_comment(product_key, username, comment, parent_id=0, reply_to_username="
             "comment": safe_comment,
             "timestamp": datetime.now().isoformat(),
             "likes": 0,
-            "parent_id": parent_id,
+            "parent_id": parent_id,   # None for top-level, integer for replies
             "reply_to_username": reply_to_username
         }).execute()
         return True
@@ -563,7 +564,7 @@ else:
             product_key = prod['product_key']
             comments = get_comments(product_key)
             
-            with st.expander(f"{txt['comments']} ({len([c for c in comments if c.get('parent_id') == 0])})"):
+            with st.expander(f"{txt['comments']} ({len([c for c in comments if c.get('parent_id') is None])})"):
                 def display_comment(comment, level=0):
                     st.markdown(f"""
                     <div class="comment-box" style="margin-left: {level*20}px;">
@@ -592,7 +593,8 @@ else:
                     for reply in replies:
                         display_comment(reply, level + 1)
                 
-                top_comments = [c for c in comments if c.get("parent_id") == 0]
+                # Top-level comments are those with parent_id == None
+                top_comments = [c for c in comments if c.get("parent_id") is None]
                 for comment in top_comments:
                     display_comment(comment)
                 
@@ -603,7 +605,7 @@ else:
                         comment_text = st.text_area(txt['your_comment'], key=f"text_{product_key}", height=100)
                         if st.form_submit_button(txt['post_comment']):
                             if comment_text.strip():
-                                add_comment(product_key, name, comment_text)
+                                add_comment(product_key, name, comment_text, parent_id=None)
                                 st.rerun()
                             else:
                                 st.warning("Please write a comment.")
